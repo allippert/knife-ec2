@@ -3,14 +3,12 @@
 #
 
 require 'chef/knife/ec2_base'
-require 'chef/knife/winrm_base'
 
 class Chef
   class Knife
     class Ec2AsLaunchconfigCreate < Knife
 
       include Knife::Ec2Base
-      include Knife::WinrmBase
       deps do
         require 'fog'
         require 'readline'
@@ -149,11 +147,6 @@ class Chef
 
         validate!
 
-        #requested_elastic_ip = config[:associate_eip] if config[:associate_eip]
-
-        # For VPC EIP assignment we need the allocation ID so fetch full EIP details
-        #elastic_ip = connection.addresses.detect{|addr| addr if addr.public_ip == requested_elastic_ip}
-
         @launch_config = autoscaling.configurations.create(create_launch_config_def)
 
         # If we don't specify a security group or security group id, Fog will
@@ -163,16 +156,12 @@ class Chef
         printed_security_groups = "default"
         printed_security_groups = @launch_config.security_groups.join(", ") if @launch_config.security_groups
 
-#        printed_security_group_ids = "default"
-#        printed_security_group_ids = @launch_config.security_group_ids.join(", ") if @launch_config.security_group_ids
-
         puts "\n"
         msg_pair("Launch Config ID", @launch_config.id)
         msg_pair("Flavor", @launch_config.instance_type)
         msg_pair("Image", @launch_config.image_id)
         msg_pair("Region", connection.instance_variable_get(:@region))
         msg_pair("Security Groups", printed_security_groups) unless vpc_mode? or (@launch_config.security_groups.nil? and @launch_config.security_group_ids)
-#        msg_pair("Security Group Ids", printed_security_group_ids) if vpc_mode? or @launch_config.security_group_ids
         msg_pair("IAM Profile", locate_config_value(:iam_instance_profile)) if locate_config_value(:iam_instance_profile)
         msg_pair("SSH Key", @launch_config.key_name)
 

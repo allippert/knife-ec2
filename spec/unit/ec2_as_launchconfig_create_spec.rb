@@ -21,7 +21,7 @@ require 'fog'
 require 'chef/knife/bootstrap'
 require 'chef/knife/core/bootstrap_context'
 
-describe Chef::Knife::Ec2ServerCreate do
+describe Chef::Knife::Ec2AcLaunchconfigCreate do
   before do
     @knife_as_create = Chef::Knife::Ec2AsLaunchconfigCreate.new
     @knife_as_create.initial_sleep_delay = 0
