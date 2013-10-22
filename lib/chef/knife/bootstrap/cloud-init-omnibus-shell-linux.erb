@@ -69,10 +69,6 @@ runcmd: |
  <% end -%>
  <% end -%>
 
- cat > /etc/chef/first-boot.json <<'EOP'
- <%= first_boot.to_json %>
- EOP
-
- <%= start_chef %>'
+ <%= start_chef %>
 
 output: {all: '| tee -a /var/log/cloud-init-output.log'}

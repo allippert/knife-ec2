@@ -27,7 +27,7 @@ describe Chef::Knife::Ec2ServerCreate do
     @knife_as_create.initial_sleep_delay = 0
 
     {
-      :id => 'launch-config-id',
+      :launch_config_id => 'launch-config-id',
       :image => 'image',
       :aws_ssh_key_id => 'aws_ssh_key_id',
       :aws_access_key_id => 'aws_access_key_id',
@@ -45,11 +45,10 @@ describe Chef::Knife::Ec2ServerCreate do
     @new_as_configurations = double()
 
     @as_configurations_attribs = { :id => 'rspec-launch-config',
-                           :flavor_id => 'm1.small',
+                           :instance_type => 'm1.small',
                            :image_id => 'ami-47241231',
                            :key_name => 'my_ssh_key',
-                           :groups => ['group1', 'group2'],
-                           :security_group_ids => ['sg-00aa11bb'],
+                           :security_groups => ['group1', 'group2'],
                            :root_device_type => 'not_ebs' }
 
     @as_configurations_attribs.each_pair do |attrib, value|
@@ -64,6 +63,7 @@ describe Chef::Knife::Ec2ServerCreate do
       @as_autoscaling.should_receive(:configurations).and_return(@as_configurations)
 
       Fog::Compute::AWS.should_receive(:new).and_return(@as_connection)
+      Fog::AWS::AutoScaling.should_receive(:new).and_return(@as_autoscaling)
       
       @knife_as_create.stub(:puts)
       @knife_as_create.stub(:print)
@@ -71,7 +71,6 @@ describe Chef::Knife::Ec2ServerCreate do
 
       @bootstrap = Chef::Knife::Bootstrap.new
       Chef::Knife::Bootstrap.stub(:new).and_return(@bootstrap)
-      @bootstrap.should_receive(:run)
 
       @chef_config = Chef::Config
 
@@ -86,8 +85,10 @@ describe Chef::Knife::Ec2ServerCreate do
     it "defaults to a distro of 'cloud-init'" do
       @knife_as_create.config[:distro] = @knife_as_create.options[:distro][:default]
       @knife_as_create.run
-      @boostrap.config[:distro].should == 'foo'
+      @knife_as_create.config[:distro].should == 'cloud-init-omnibus-shell-linux'
     end
+
+    it
   end
 
 end

@@ -24,7 +24,7 @@ class Chef
       attr_accessor :initial_sleep_delay
       attr_reader :launch_config
 
-      option :id,
+      option :launch_config_id,
              :short => "-n name",
              :long =>  "--launch-config-id id",
              :description => "The unique id/name for the launch configuration"
@@ -161,18 +161,18 @@ class Chef
         # default security group id at this point unless we look it up, hence
         # 'default' is printed if no id was specified.
         printed_security_groups = "default"
-        printed_security_groups = @launch_config.groups.join(", ") if @launch_config.groups
+        printed_security_groups = @launch_config.security_groups.join(", ") if @launch_config.security_groups
 
-        printed_security_group_ids = "default"
-        printed_security_group_ids = @launch_config.security_group_ids.join(", ") if @launch_config.security_group_ids
+#        printed_security_group_ids = "default"
+#        printed_security_group_ids = @launch_config.security_group_ids.join(", ") if @launch_config.security_group_ids
 
         puts "\n"
         msg_pair("Launch Config ID", @launch_config.id)
-        msg_pair("Flavor", @launch_config.flavor_id)
+        msg_pair("Flavor", @launch_config.instance_type)
         msg_pair("Image", @launch_config.image_id)
         msg_pair("Region", connection.instance_variable_get(:@region))
-        msg_pair("Security Groups", printed_security_groups) unless vpc_mode? or (@launch_config.groups.nil? and @launch_config.security_group_ids)
-        msg_pair("Security Group Ids", printed_security_group_ids) if vpc_mode? or @launch_config.security_group_ids
+        msg_pair("Security Groups", printed_security_groups) unless vpc_mode? or (@launch_config.security_groups.nil? and @launch_config.security_group_ids)
+#        msg_pair("Security Group Ids", printed_security_group_ids) if vpc_mode? or @launch_config.security_group_ids
         msg_pair("IAM Profile", locate_config_value(:iam_instance_profile)) if locate_config_value(:iam_instance_profile)
         msg_pair("SSH Key", @launch_config.key_name)
         msg_pair("Root Device Type", @launch_config.root_device_type)
@@ -195,7 +195,6 @@ class Chef
         if config[:ebs_optimized]
           msg_pair("EBS is Optimized", @launch_config.ebs_optimized.to_s)
         end
-        msg_pair("Private IP Address", @server.private_ip_address)
         msg_pair("Environment", config[:environment] || '_default')
         msg_pair("Run List", (config[:run_list] || []).join(', '))
         msg_pair("JSON Attributes",config[:json_attributes]) unless !config[:json_attributes] || config[:json_attributes].empty?
@@ -242,7 +241,7 @@ class Chef
 
         super([:image, :aws_ssh_key_id, :aws_access_key_id, :aws_secret_access_key])
 
-        if locate_config_value(:id).nil?
+        if locate_config_value(:launch_config_id).nil?
           ui.error("You have not provided the unique id/name of the autoscale launch configuration")
           exit 1
         end
@@ -273,24 +272,13 @@ class Chef
 
       def create_launch_config_def
         launch_config_def = {
-            :id                     => locate_config_value(:id),
+            :id                     => locate_config_value(:launch_config_id),
             :image_id               => locate_config_value(:image),
-            :groups                 => config[:security_groups],
-            :security_group_ids     => locate_config_value(:security_group_ids),
-            :flavor_id              => locate_config_value(:flavor),
+            :security_groups        => config[:security_groups],
+            :instance_type          => locate_config_value(:flavor),
             :key_name               => Chef::Config[:knife][:aws_ssh_key_id],
             :iam_instance_profile   => locate_config_value(:iam_instance_profile)
         }
-
-=begin
-        if Chef::Config[:knife][:aws_user_data]
-          begin
-            launch_config_def.merge!(:user_data => File.read(Chef::Config[:knife][:aws_user_data]))
-          rescue
-            ui.warn("Cannot read #{Chef::Config[:knife][:aws_user_data]}: #{$!.inspect}. Ignoring option.")
-          end
-        end
-=end
 
         if config[:ebs_optimized]
           launch_config_def[:ebs_optimized] = "true"
@@ -333,8 +321,7 @@ class Chef
         template_file = bootstrap_for_cloud_init.find_template
         launch_config_def[:user_data] = bootstrap_for_cloud_init.render_template(File.read(template_file))
 
-        msg_pair("User Data", launch_config_def[:user_data])
-        File.open("/tmp/launch-config.user-data.txt", 'w') { |file| file.write(launch_config_def[:user_data]) }
+        #msg_pair("User Data", launch_config_def[:user_data])
 
         launch_config_def
       end
