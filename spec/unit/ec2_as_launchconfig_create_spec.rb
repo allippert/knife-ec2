@@ -23,7 +23,7 @@ require 'chef/knife/core/bootstrap_context'
 
 describe Chef::Knife::Ec2ServerCreate do
   before do
-    @knife_as_create = Chef::Knife::AutoScalingLaunchConfigCreate.new
+    @knife_as_create = Chef::Knife::Ec2AsLaunchconfigCreate.new
     @knife_as_create.initial_sleep_delay = 0
 
     {

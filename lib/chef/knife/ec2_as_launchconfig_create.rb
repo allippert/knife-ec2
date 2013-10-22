@@ -7,7 +7,7 @@ require 'chef/knife/winrm_base'
 
 class Chef
   class Knife
-    class AutoScalingLaunchConfigCreate < Knife
+    class Ec2AsLaunchconfigCreate < Knife
 
       include Knife::Ec2Base
       include Knife::WinrmBase
@@ -19,12 +19,13 @@ class Chef
         Chef::Knife::Bootstrap.load_deps
       end
 
-      banner "knife ec2 as-launch-config create (options)"
+      banner "knife ec2 as launchconfig create (options)"
 
       attr_accessor :initial_sleep_delay
       attr_reader :launch_config
 
       option :id,
+             :short => "-n name",
              :long =>  "--launch-config-id id",
              :description => "The unique id/name for the launch configuration"
 
