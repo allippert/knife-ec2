@@ -69,6 +69,15 @@ class Chef
         end
       end
 
+      def autoscaling
+        @autoscale ||= begin
+          autoscale = Fog::AWS::AutoScaling.new(
+            :aws_access_key_id => Chef::Config[:knife][:aws_access_key_id],
+            :aws_secret_access_key => Chef::Config[:knife][:aws_secret_access_key]
+          )
+        end
+      end
+
       def locate_config_value(key)
         key = key.to_sym
         config[key] || Chef::Config[:knife][key]
