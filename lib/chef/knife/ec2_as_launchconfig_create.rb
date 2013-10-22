@@ -182,10 +182,10 @@ class Chef
         msg_pair("Root Device Delete on Terminate", device_map['deleteOnTermination'])
 
         if config[:ebs_size]
-          if ami.block_device_mappings.first['volumeSize'].to_i < config[:ebs_size].to_i
+          if ami.block_device_mapping.first['volumeSize'].to_i < config[:ebs_size].to_i
             volume_too_large_warning = "#{config[:ebs_size]}GB " +
                 "EBS volume size is larger than size set in AMI of " +
-                "#{ami.block_device_mappings.first['volumeSize']}GB.\n" +
+                "#{ami.block_device_mapping.first['volumeSize']}GB.\n" +
                 "Use file system tools to make use of the increased volume size."
             msg_pair("Warning", volume_too_large_warning, :yellow)
           end
@@ -285,7 +285,7 @@ class Chef
           launch_config_def[:ebs_optimized] = "false"
         end
 
-        ami_map = ami.block_device_mappings.first
+        ami_map = ami.block_device_mapping.first
         ebs_size = begin
           if config[:ebs_size]
             Integer(config[:ebs_size]).to_s
