@@ -175,23 +175,22 @@ class Chef
 #        msg_pair("Security Group Ids", printed_security_group_ids) if vpc_mode? or @launch_config.security_group_ids
         msg_pair("IAM Profile", locate_config_value(:iam_instance_profile)) if locate_config_value(:iam_instance_profile)
         msg_pair("SSH Key", @launch_config.key_name)
-        msg_pair("Root Device Type", @launch_config.root_device_type)
-        if @launch_config.root_device_type == "ebs"
-          device_map = @launch_config.block_device_mapping.first
-          msg_pair("Root Volume ID", device_map['volumeId'])
-          msg_pair("Root Device Name", device_map['deviceName'])
-          msg_pair("Root Device Delete on Terminate", device_map['deleteOnTermination'])
 
-          if config[:ebs_size]
-            if ami.block_device_mapping.first['volumeSize'].to_i < config[:ebs_size].to_i
-              volume_too_large_warning = "#{config[:ebs_size]}GB " +
-                  "EBS volume size is larger than size set in AMI of " +
-                  "#{ami.block_device_mapping.first['volumeSize']}GB.\n" +
-                  "Use file system tools to make use of the increased volume size."
-              msg_pair("Warning", volume_too_large_warning, :yellow)
-            end
+        device_map = @launch_config.block_device_mappings.first
+        msg_pair("Root Volume ID", device_map['volumeId'])
+        msg_pair("Root Device Name", device_map['deviceName'])
+        msg_pair("Root Device Delete on Terminate", device_map['deleteOnTermination'])
+
+        if config[:ebs_size]
+          if ami.block_device_mappings.first['volumeSize'].to_i < config[:ebs_size].to_i
+            volume_too_large_warning = "#{config[:ebs_size]}GB " +
+                "EBS volume size is larger than size set in AMI of " +
+                "#{ami.block_device_mappings.first['volumeSize']}GB.\n" +
+                "Use file system tools to make use of the increased volume size."
+            msg_pair("Warning", volume_too_large_warning, :yellow)
           end
         end
+
         if config[:ebs_optimized]
           msg_pair("EBS is Optimized", @launch_config.ebs_optimized.to_s)
         end
@@ -286,35 +285,33 @@ class Chef
           launch_config_def[:ebs_optimized] = "false"
         end
 
-        if ami.root_device_type == "ebs"
-          ami_map = ami.block_device_mapping.first
-          ebs_size = begin
-            if config[:ebs_size]
-              Integer(config[:ebs_size]).to_s
-            else
-              ami_map["volumeSize"].to_s
-            end
-          rescue ArgumentError
-            puts "--ebs-size must be an integer"
-            msg opt_parser
-            exit 1
+        ami_map = ami.block_device_mappings.first
+        ebs_size = begin
+          if config[:ebs_size]
+            Integer(config[:ebs_size]).to_s
+          else
+            ami_map["volumeSize"].to_s
           end
-          delete_term = if config[:ebs_no_delete_on_term]
-                          "false"
-                        else
-                          ami_map["deleteOnTermination"]
-                        end
-
-          launch_config_def[:block_device_mapping] =
-              [{
-                   'DeviceName' => ami_map["deviceName"],
-                   'Ebs.VolumeSize' => ebs_size,
-                   'Ebs.DeleteOnTermination' => delete_term
-               }]
+        rescue ArgumentError
+          puts "--ebs-size must be an integer"
+          msg opt_parser
+          exit 1
         end
+        delete_term = if config[:ebs_no_delete_on_term]
+                        "false"
+                      else
+                        ami_map["deleteOnTermination"]
+                      end
+
+        launch_config_def[:block_device_mappings] =
+            [{
+                 'DeviceName' => ami_map["deviceName"],
+                 'Ebs.VolumeSize' => ebs_size,
+                 'Ebs.DeleteOnTermination' => delete_term
+             }]
 
         (config[:ephemeral] || []).each_with_index do |device_name, i|
-          launch_config_def[:block_device_mapping] = (launch_config_def[:block_device_mapping] || []) << {'VirtualName' => "ephemeral#{i}", 'DeviceName' => device_name}
+          launch_config_def[:block_device_mappings] = (launch_config_def[:block_device_mappings] || []) << {'VirtualName' => "ephemeral#{i}", 'DeviceName' => device_name}
         end
 
         # Setup bootstrap user_data for cloud-init
