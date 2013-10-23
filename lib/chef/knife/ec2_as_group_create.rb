@@ -33,19 +33,23 @@ class Chef
 
       option :default_cooldown,
              :long => "--default-cooldown VALUE",
-             :description => "Time (in seconds) between a successful scaling activity and succeeding scaling activity."
+             :description => "Time (in seconds) between a successful scaling activity and succeeding scaling activity.",
+             :proc => Proc.new { |key| Chef::Config[:knife][:default_cooldown] = key }
 
       option :desired_capacity,
              :long => "--desired-capacity VALUE",
-             :description => "Capacity setting for the group (minimum-size <= desired-capacity <= maximum-size)."
+             :description => "Capacity setting for the group (minimum-size <= desired-capacity <= maximum-size).",
+             :proc => Proc.new { |key| Chef::Config[:knife][:desired_capacity] = key }
 
       option :grace_period,
              :long => "--grace-period VALUE",
-             :description => "The period after an instance is launched. During this period, any health check failure of that instance is ignored."
+             :description => "The period after an instance is launched. During this period, any health check failure of that instance is ignored.",
+             :proc => Proc.new { |key| Chef::Config[:knife][:grace_period] = key }
 
       option :health_check_type,
              :long => "health-check-type VALUE",
-             :description => "Type of health check for instances of this group."
+             :description => "Type of health check for instances of this group.",
+             :proc => Proc.new { |key| Chef::Config[:knife][:health_check_type] = key }
 
       option :load_balancers,
              :long => "--load-balancers VALUE1,VALUE2,VALUE3...",
@@ -55,12 +59,14 @@ class Chef
       option :min_size,
              :short => "-m VALUE",
              :long => "--min-size VALUE",
-             :description => "Minimum group size (0 <= minimum-size <= maximum-size). Required."
+             :description => "Minimum group size (0 <= minimum-size <= maximum-size). Required.",
+             :proc => Proc.new { |key| Chef::Config[:knife][:min_size] = key }
 
       option :max_size,
              :short => "-M VALUE",
              :long => "--max-size VALUE",
-             :description => "Maximum group size (minimum-size <= maximum-size < 10000). Required."
+             :description => "Maximum group size (minimum-size <= maximum-size < 10000). Required.",
+             :proc => Proc.new { |key| Chef::Config[:knife][:max_size] = key }
 
       option :placement_group,
              :long => "--placement-group PLACEMENT_GROUP",
@@ -78,13 +84,14 @@ class Chef
 
       option :vpc_zone_identifier,
              :long => "--vpc-zone-identifier VALUE",
-             :description => "A comma-separated list of subnet identifiers of Amazon Virtual Private Clouds (Amazon VPCs). If you specify subnets and Availability Zones, ensure that the subnets' Availability Zones  match the Availability Zones specified."
+             :description => "A comma-separated list of subnet identifiers of Amazon Virtual Private Clouds (Amazon VPCs). If you specify subnets and Availability Zones, ensure that the subnets' Availability Zones  match the Availability Zones specified.",
+             :proc => Proc.new { |key| Chef::Config[:knife][:vpc_zone_identifier] = key }
 
       option :availability_zone,
              :short => "-Z ZONE",
              :long => "--availability-zone ZONE",
              :description => "The Availability Zone",
-             :proc => Proc.new { |key| Chef::Config[:knife][:availability_zone] = key }
+             :proc => Proc.new { |key| Chef::Config[:knife][:availability_zone] = key.split(',') }
 
       option :ssh_key_name,
              :short => "-S KEY",
