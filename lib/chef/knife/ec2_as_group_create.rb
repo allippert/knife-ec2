@@ -66,7 +66,7 @@ class Chef
              :short => "-M VALUE",
              :long => "--max-size VALUE",
              :description => "Maximum group size (minimum-size <= maximum-size < 10000). Required.",
-             :proc => Proc.new { |key| Chef::Config[:knife][:max_size] = key }
+             :proc => Proc.new { |key| config[:max_size] = key }
 
       option :placement_group,
              :long => "--placement-group PLACEMENT_GROUP",
@@ -104,7 +104,8 @@ class Chef
 
         validate!
 
-        @as_group = autoscaling.groups.create(create_as_group_def)
+        @as_group = create_as_group
+        @as_group = @as_group.save
 
         puts "\n"
         msg_pair("AutoScaling Group Name", @as_group.id)
@@ -167,6 +168,25 @@ class Chef
         as_group_def[:vpc_zone_identifier] = locate_config_value(:vpc_zone_identifier)
 
         as_group_def
+      end
+
+      def create_as_group
+        @as_group = autoscaling.groups.new(create_as_group_def)
+        # Bug in Fog overwrites the following attributes on initialization
+
+        @as_group.default_cooldown = locate_config_value(:default_cooldown) if locate_config_value(:default_cooldown)
+        @as_group.desired_capacity = locate_config_value(:desired_capacity) if locate_config_value(:desired_capacity)
+        @as_group.enabled_metrics = locate_config_value(:enabled_metrics) if locate_config_value(:enabled_metrics)
+        @as_group.health_check_grace_period = locate_config_value(:health_check_grace_period) if locate_config_value(:health_check_grace_period)
+        @as_group.health_check_type = locate_config_value(:health_check_type) if locate_config_value(:health_check_type)
+        @as_group.load_balancer_names = locate_config_value(:load_balancer_names) if locate_config_value(:load_balancer_names)
+        @as_group.max_size = locate_config_value(:max_size) if locate_config_value(:max_size)
+        @as_group.min_size = locate_config_value(:min_size) if locate_config_value(:min_size)
+        @as_group.suspended_processes = locate_config_value(:suspended_processes) if locate_config_value(:suspended_processes)
+        #@as_group.tags = locate_config_value(:tags) if locate_config_value(:tags)
+        @as_group.termination_policies = locate_config_value(:termination_policies) if locate_config_value(:termination_policies)
+
+        @as_group
       end
 
     end
