@@ -66,7 +66,7 @@ class Chef
              :short => "-M VALUE",
              :long => "--max-size VALUE",
              :description => "Maximum group size (minimum-size <= maximum-size < 10000). Required.",
-             :proc => Proc.new { |key| config[:max_size] = key }
+             :proc => Proc.new { |key| Chef::Config[:knife][:max_size] = key }
 
       option :placement_group,
              :long => "--placement-group PLACEMENT_GROUP",
