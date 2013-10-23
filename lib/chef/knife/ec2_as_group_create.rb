@@ -73,9 +73,11 @@ class Chef
              :description => "The placement group to place a cluster compute instance",
              :proc => Proc.new { |pg| Chef::Config[:knife][:placement_group] = pg }
 
-      option :tag,
-             :long => "--tag 'k=value, [id=value], [t=value], [v=value], [p=value]'",
-             :description => "The tags to be created. Each tag should follow this format: \n\"id=resource-name, t=resource-type, k=tag-key, v=tag-val,p=propagate-at-launch flag\". NOTE: id is ResourceId, t is ResourceType, k is TagKey, v is TagValue, p is PropagateAtLaunch."
+      option :tags,
+             :short => "-T T=V[,T=V,...]",
+             :long => "--tags Tag=Value[,Tag=Value...]",
+             :description => "The tags for this server",
+             :proc => Proc.new { |tags| tags.split(',') }
 
       option :termination_policies,
              :long => "--termination-policies VALUE1,VALUE2,VALUE3...",
@@ -107,10 +109,21 @@ class Chef
         @as_group = create_as_group
         @as_group = @as_group.save
 
+        hashed_tags={}
+        tags.map{ |t| key,val=t.split('='); hashed_tags[key]=val} unless tags.nil?
+
+        # Always set the Name tag
+        unless hashed_tags.keys.include? "Name"
+          hashed_tags["Name"] = @as_group.id
+        end
+
+        printed_tags = hashed_tags.map{ |tag, val| "#{tag}: #{val}" }.join(", ")
+
         puts "\n"
         msg_pair("AutoScaling Group Name", @as_group.id)
         msg_pair("Launch Config ID", @as_group.launch_configuration_name)
         msg_pair("Availability Zones", @as_group.availability_zones) if @as_group.availability_zones
+        msg_pair("Tags", printed_tags)
         msg_pair("DefaultCooldown", @as_group.default_cooldown)
         msg_pair("DesiredCapacity", @as_group.desired_capacity)
         msg_pair("EnabledMetrics", @as_group.enabled_metrics) if @as_group.enabled_metrics
@@ -124,6 +137,26 @@ class Chef
         msg_pair("Tags", @as_group.tags)
         msg_pair("TerminationPolicies", @as_group.termination_policies)
         msg_pair("VPCZoneIdentifier", @as_group.vpc_zone_identifier)
+
+        print "\n#{ui.color("Waiting for autoscaling group", :magenta)}"
+
+        # wait for instance to come up before acting against it
+        @as_group.wait_for { print "."; ready? }
+
+        puts("\n")
+
+        # occasionally 'ready?' isn't, so retry a couple times if needed.
+        tries = 6
+        begin
+          create_tags(hashed_tags) unless hashed_tags.empty?
+        rescue Fog::Compute::AWS::NotFound => e
+          raise if (tries -= 1) <= 0
+          ui.warn("Autoscaling Group not ready, retrying tag application (retries left: #{tries})")
+          sleep 5
+          retry
+        end
+
+
       end
 
       def launch_config
@@ -187,6 +220,21 @@ class Chef
         @as_group.termination_policies = locate_config_value(:termination_policies) if locate_config_value(:termination_policies)
 
         @as_group
+      end
+
+      def tags
+        tags = locate_config_value(:tags)
+        if !tags.nil? and tags.length != tags.to_s.count('=')
+          ui.error("Tags should be entered in a key = value pair")
+          exit 1
+        end
+        tags
+      end
+
+      def create_tags(hashed_tags)
+        hashed_tags.each_pair do |key,val|
+          connection.tags.create(:key => key, :value => val, :resource_id => @as_group.id, :resource_type => 'auto-scaling-group')
+        end
       end
 
     end

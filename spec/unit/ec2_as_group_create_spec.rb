@@ -66,14 +66,21 @@ describe Chef::Knife::Ec2AsGroupCreate do
       @as_configurations.should_receive(:get).with(@as_configurations_attribs[:id]).and_return(@new_as_configurations)
       @as_autoscaling.should_receive(:configurations).and_return(@as_configurations)
       @as_autoscaling.should_receive(:groups).and_return(@as_groups)
+
       @as_groups.should_receive(:new).and_return(@new_as_groups)
 
       @new_as_groups.stub(:max_size=)
       @new_as_groups.stub(:min_size=)
+      @new_as_groups.stub(:wait_for)
 
       @new_as_groups.should_receive(:save).and_return(@new_as_groups)
 
       Fog::AWS::AutoScaling.should_receive(:new).and_return(@as_autoscaling)
+
+      @ec2_connection = double(Fog::Compute::AWS)
+      Fog::Compute::AWS.should_receive(:new).and_return(@ec2_connection)
+
+      @ec2_connection.stub_chain(:tags).and_return double('create', :create => true)
     end
 
     it "sets the launch config id correctly" do

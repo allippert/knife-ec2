@@ -49,11 +49,13 @@ class Chef
              :description => "The security groups for the server(s) in the auto scaling group; not allowed when using VPC",
              :proc => Proc.new { |groups| groups.split(',') }
 
+=begin
       option :security_group_ids,
              :short => "-g X,Y,Z",
              :long => "--security-group-ids X,Y,Z",
              :description => "The security group ids for this server(s) in the auto scaling group; required when using VPC",
              :proc => Proc.new { |security_group_ids| security_group_ids.split(',') }
+=end
 
       option :associate_public_ip_address,
              :long => "--associate-public-ip-address",
@@ -64,11 +66,6 @@ class Chef
              :long => "--ssh-key KEY",
              :description => "The AWS SSH key id",
              :proc => Proc.new { |key| Chef::Config[:knife][:aws_ssh_key_id] = key }
-
-      option :identity_file,
-             :short => "-i IDENTITY_FILE",
-             :long => "--identity-file IDENTITY_FILE",
-             :description => "The SSH identity file used for authentication"
 
       option :prerelease,
              :long => "--prerelease",
@@ -133,13 +130,6 @@ class Chef
              :long => "--fqdn FQDN",
              :description => "Pre-defined FQDN",
              :proc => Proc.new { |key| Chef::Config[:knife][:fqdn] = key },
-             :default => nil
-
-      option :aws_user_data,
-             :long => "--user-data USER_DATA_FILE",
-             :short => "-u USER_DATA_FILE",
-             :description => "The EC2 User Data file to provision the instance with",
-             :proc => Proc.new { |m| Chef::Config[:knife][:aws_user_data] = m },
              :default => nil
 
       def run
