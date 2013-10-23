@@ -18,7 +18,7 @@ write_files:
    owner: root:root
    content: |
 <%= config_content.gsub(/^(.)/, '     \1') %>
- - path: /etc/chef/validation.pem
+ - path: /etc/chef/<%= Chef::Config[:validation_client_name] %>.pem
    permissions: '0600'
    owner: 'root:root'
    content: |
