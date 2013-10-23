@@ -30,45 +30,49 @@ write_files:
 <%= hash.to_json.gsub(/^(.)/, '     \1') %>
 <% end -%>
 
-runcmd: |
- exists() {
-   if command -v $1 &>/dev/null
-   then
-     return 0
-   else
-     return 1
-   fi
- }
+install_scripts:
+ - &install_chef |
+  exists() {
+    if command -v $1 &>/dev/null
+    then
+      return 0
+    else
+      return 1
+    fi
+  }
 
- install_sh="https://www.opscode.com/chef/install.sh"
- version_string="-v <%= chef_version %>"
+  install_sh="https://www.opscode.com/chef/install.sh"
+  version_string="-v <%= chef_version %>"
 
- if ! exists /usr/bin/chef-client; then
-   if exists wget; then
-     bash <(wget <%= "--proxy=on " if knife_config[:bootstrap_proxy] %> ${install_sh} -O -) ${version_string}
-   elif exists curl; then
-     bash <(curl -L <%= "--proxy \"#{knife_config[:bootstrap_proxy]}\" " if knife_config[:bootstrap_proxy] %> ${install_sh}) ${version_string}
-   else
-     echo "Neither wget nor curl found. Please install one and try again." >&2
-     exit 1
-   fi
- fi
+  if ! exists /usr/bin/chef-client; then
+    if exists wget; then
+      bash <(wget <%= "--proxy=on " if knife_config[:bootstrap_proxy] %> ${install_sh} -O -) ${version_string}
+    elif exists curl; then
+      bash <(curl -L <%= "--proxy \"#{knife_config[:bootstrap_proxy]}\" " if knife_config[:bootstrap_proxy] %> ${install_sh}) ${version_string}
+    else
+      echo "Neither wget nor curl found. Please install one and try again." >&2
+      exit 1
+    fi
+  fi
 
- mkdir -p /etc/chef
+  mkdir -p /etc/chef
 
- <% if encrypted_data_bag_secret -%>
-  cat > /etc/chef/encrypted_data_bag_secret <<'EOP'
- <%= encrypted_data_bag_secret %>
- EOP
- chmod 0600 /etc/chef/encrypted_data_bag_secret
- <% end -%>
+  <% if encrypted_data_bag_secret -%>
+   cat > /etc/chef/encrypted_data_bag_secret <<'EOP'
+  <%= encrypted_data_bag_secret %>
+  EOP
+  chmod 0600 /etc/chef/encrypted_data_bag_secret
+  <% end -%>
 
- <%# Generate Ohai Hints -%>
- <% unless @chef_config[:knife][:hints].nil? || @chef_config[:knife][:hints].empty? -%>
- mkdir -p /etc/chef/ohai/hints
+  <%# Generate Ohai Hints -%>
+  <% unless @chef_config[:knife][:hints].nil? || @chef_config[:knife][:hints].empty? -%>
+  mkdir -p /etc/chef/ohai/hints
 
- <% end -%>
+  <% end -%>
 
- <%= start_chef %>
+  <%= start_chef %>
+
+runcmd:
+ - [ bash, -c, *install_chef ]
 
 output: {all: '| tee -a /var/log/cloud-init-output.log'}
