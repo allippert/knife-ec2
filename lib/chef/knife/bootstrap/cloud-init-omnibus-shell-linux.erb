@@ -23,9 +23,14 @@ write_files:
    owner: 'root:root'
    content: |
 <%= validation_key.gsub(/^(.)/, '     \1') %>
+<% @chef_config[:knife][:hints].each do |name, hash| -%>
+ - path: /etc/chef/ohai/hints/<%= name %>.json
+   owner: 'root:root'
+   content: |
+<%= hash.to_json.gsub(/^(.)/, '     \1') %>
+<% end -%>
 
 runcmd: |
- <%= "export http_proxy=\"#{knife_config[:bootstrap_proxy]}\"" if knife_config[:bootstrap_proxy] -%>
  exists() {
    if command -v $1 &>/dev/null
    then
@@ -62,11 +67,6 @@ runcmd: |
  <% unless @chef_config[:knife][:hints].nil? || @chef_config[:knife][:hints].empty? -%>
  mkdir -p /etc/chef/ohai/hints
 
- <% @chef_config[:knife][:hints].each do |name, hash| -%>
- cat > /etc/chef/ohai/hints/<%= name %>.json <<'EOP'
- <%= hash.to_json %>
- EOP
- <% end -%>
  <% end -%>
 
  <%= start_chef %>
