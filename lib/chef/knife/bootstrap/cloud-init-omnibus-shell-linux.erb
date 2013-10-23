@@ -13,12 +13,17 @@ write_files:
    owner: root:root
    content: |
 <%= first_boot.to_json.gsub(/^(.)/, '     \1') %>
+ - path: /etc/chef/init.json
+   permissions: '0600'
+   owner: root:root
+   content: |
+<%= first_boot.to_json.gsub(/^(.)/, '     \1') %>
  - path: /etc/chef/client.rb
    permissions: '0600'
    owner: root:root
    content: |
 <%= config_content.gsub(/^(.)/, '     \1') %>
- - path: /etc/chef/<%= Chef::Config[:validation_client_name] %>.pem
+ - path: /etc/chef/validation.pem
    permissions: '0600'
    owner: 'root:root'
    content: |
