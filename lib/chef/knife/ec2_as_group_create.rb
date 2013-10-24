@@ -136,7 +136,7 @@ class Chef
         msg_pair("MaxSize", @as_group.max_size)
         msg_pair("MinSize", @as_group.min_size)
         msg_pair("PlacementGroup", @as_group.placement_group)
-        msg_pair("Tags", @as_group.tags)
+        msg_pair("Tags", hashed_tags)
         msg_pair("TerminationPolicies", @as_group.termination_policies)
         msg_pair("VPCZoneIdentifier", @as_group.vpc_zone_identifier)
 
@@ -150,6 +150,7 @@ class Chef
         # occasionally 'ready?' isn't, so retry a couple times if needed.
         tries = 6
         begin
+          puts "\nCreating tags for autoscaling group\n"
           create_tags(tags_array) unless tags_array.empty?
         rescue Fog::Compute::AWS::NotFound => e
           raise if (tries -= 1) <= 0
