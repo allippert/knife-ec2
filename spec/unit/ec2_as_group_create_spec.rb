@@ -77,10 +77,8 @@ describe Chef::Knife::Ec2AsGroupCreate do
 
       Fog::AWS::AutoScaling.should_receive(:new).and_return(@as_autoscaling)
 
-      @ec2_connection = double(Fog::Compute::AWS)
-      Fog::Compute::AWS.should_receive(:new).and_return(@ec2_connection)
+      @as_autoscaling.should_receive(:create_or_update_tags)
 
-      @ec2_connection.stub_chain(:tags).and_return double('create', :create => true)
     end
 
     it "sets the launch config id correctly" do

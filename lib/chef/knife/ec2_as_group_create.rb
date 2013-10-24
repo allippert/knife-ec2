@@ -109,12 +109,14 @@ class Chef
         @as_group = create_as_group
         @as_group = @as_group.save
 
+        tags_array=[]
         hashed_tags={}
-        tags.map{ |t| key,val=t.split('='); hashed_tags[key]=val} unless tags.nil?
+        tags.map{ |t| key,val=t.split('='); hashed_tags[key]=val ; tags_array.push(:Key => key, :PropagateAtLaunch => true, :Value => val, :ResourceId => @as_group.id, :ResourceType => 'auto-scaling-group')} unless tags.nil?
 
         # Always set the Name tag
         unless hashed_tags.keys.include? "Name"
           hashed_tags["Name"] = @as_group.id
+          tags_array.push(:Key => "Name", :PropagateAtLaunch => true, :Value => @as_group.id, :ResourceId => @as_group.id, :ResourceType => 'auto-scaling-group')
         end
 
         printed_tags = hashed_tags.map{ |tag, val| "#{tag}: #{val}" }.join(", ")
@@ -148,7 +150,7 @@ class Chef
         # occasionally 'ready?' isn't, so retry a couple times if needed.
         tries = 6
         begin
-          create_tags(hashed_tags) unless hashed_tags.empty?
+          create_tags(tags_array) unless tags_array.empty?
         rescue Fog::Compute::AWS::NotFound => e
           raise if (tries -= 1) <= 0
           ui.warn("Autoscaling Group not ready, retrying tag application (retries left: #{tries})")
@@ -216,7 +218,6 @@ class Chef
         @as_group.max_size = locate_config_value(:max_size) if locate_config_value(:max_size)
         @as_group.min_size = locate_config_value(:min_size) if locate_config_value(:min_size)
         @as_group.suspended_processes = locate_config_value(:suspended_processes) if locate_config_value(:suspended_processes)
-        #@as_group.tags = locate_config_value(:tags) if locate_config_value(:tags)
         @as_group.termination_policies = locate_config_value(:termination_policies) if locate_config_value(:termination_policies)
 
         @as_group
@@ -231,10 +232,8 @@ class Chef
         tags
       end
 
-      def create_tags(hashed_tags)
-        hashed_tags.each_pair do |key,val|
-          connection.tags.create(:key => key, :value => val, :resource_id => @as_group.id, :resource_type => 'auto-scaling-group')
-        end
+      def create_tags(tags_array)
+        autoscaling.create_or_update_tags(tags_array)
       end
 
     end
