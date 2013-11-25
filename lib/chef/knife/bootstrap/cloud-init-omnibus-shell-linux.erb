@@ -23,6 +23,7 @@ write_files:
    owner: root:root
    content: |
 <%= config_content.gsub(/^(.)/, '     \1') %>
+     json_attribs     "/etc/chef/init.json"
  - path: /etc/chef/validation.pem
    permissions: '0600'
    owner: 'root:root'

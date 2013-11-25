@@ -95,12 +95,6 @@ class Chef
              :description => "The Availability Zone",
              :proc => Proc.new { |key| Chef::Config[:knife][:availability_zone] = key.split(',') }
 
-      option :ssh_key_name,
-             :short => "-S KEY",
-             :long => "--ssh-key KEY",
-             :description => "The AWS SSH key id",
-             :proc => Proc.new { |key| Chef::Config[:knife][:aws_ssh_key_id] = key }
-
       def run
         $stdout.sync = true
 
@@ -168,7 +162,7 @@ class Chef
 
       def validate!
 
-        super([:aws_ssh_key_id, :aws_access_key_id, :aws_secret_access_key])
+        super([:aws_access_key_id, :aws_secret_access_key])
 
         if locate_config_value(:name).nil?
           ui.error("You have not provided the unique id/name of the autoscale group")
